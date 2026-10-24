@@ -1,0 +1,137 @@
+:root {
+  color-scheme: dark;
+  --panel-bg: rgba(14, 16, 36, 0.62);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --text: #e8e9f3;
+  --text-dim: #9a9cb8;
+  --accent: #ffcf5c;
+  --warning: #ffb35c;
+  --error: #ff6b7a;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: #05061a;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; overflow: hidden; }
+
+.app { position: relative; width: 100vw; height: 100vh; }
+.stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.panel {
+  position: absolute;
+  padding: 12px 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+h1 { margin: 0 0 10px; font-size: 16px; letter-spacing: 0.02em; }
+h2 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+p { margin: 8px 0 0; }
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+button:hover { background: rgba(255, 255, 255, 0.14); }
+button.primary { background: var(--accent); color: #1a1405; border-color: transparent; font-weight: 600; }
+button.primary:hover { filter: brightness(1.08); }
+
+.row { display: flex; gap: 8px; }
+
+select {
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+select option { background: #14162e; }
+.songs { flex: 1; min-width: 200px; }
+
+/* Top-left: file */
+.file { top: 16px; left: 16px; width: 340px; }
+.song { color: var(--text-dim); font-size: 13px; }
+.warning { color: var(--warning); font-size: 13px; }
+.error { color: var(--error); font-size: 13px; }
+
+/* Top-right: tracks */
+.legend { top: 16px; right: 16px; min-width: 240px; }
+.legend ul { list-style: none; margin: 0; padding: 0; }
+.legend li label { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+.legend li.muted { opacity: 0.4; }
+.swatch { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+.name { flex: 1; }
+.badge { font-size: 11px; color: var(--text-dim); border: 1px solid var(--panel-border); border-radius: 6px; padding: 0 6px; }
+.count { font-size: 11px; color: var(--text-dim); min-width: 28px; text-align: right; }
+.toggle { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--panel-border); cursor: pointer; }
+
+/* Bottom-left: keyboard */
+.keys { left: 16px; bottom: 84px; background: rgba(14, 16, 36, 0.75); }
+.keys p { font-size: 12px; color: var(--text-dim); }
+.keys .hint { color: var(--accent); }
+.piano { display: flex; gap: 2px; }
+.piano .white {
+  position: relative;
+  width: 28px;
+  height: 56px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1c1d2e;
+  border-radius: 0 0 4px 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.piano .black {
+  position: absolute;
+  top: 0;
+  right: -10px;
+  z-index: 1;
+  width: 18px;
+  height: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 3px;
+  background: #1c1d2e;
+  color: #e8e9f3;
+  border-radius: 0 0 3px 3px;
+  font-size: 9px;
+}
+kbd { font: inherit; padding: 0 4px; border: 1px solid var(--panel-border); border-radius: 4px; }
+
+/* Bottom: transport */
+.transport { left: 16px; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.progress { flex: 1; accent-color: var(--accent); }
+.time { font-variant-numeric: tabular-nums; color: var(--text-dim); min-width: 92px; text-align: right; }
+
+.drop-overlay {
+  position: absolute;
+  inset: 16px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  background: rgba(5, 6, 26, 0.6);
+  font-size: 20px;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .legend { top: auto; bottom: 84px; right: 16px; min-width: 0; }
+  .keys { display: none; }
+}
