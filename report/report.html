@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Звіт ЛР2 — Петриченко Павло, ІПС-42</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 10mm 20mm 25mm;
+    @top-right { content: counter(page); font: 14pt 'Times New Roman', serif; }
+  }
+  @page :first { @top-right { content: none; } }
+
+  html { font-family: 'Times New Roman', Times, serif; font-size: 14pt; color: #000; }
+  body { margin: 0; line-height: 1.5; }
+  p { margin: 0; text-indent: 1.25cm; text-align: justify; hyphens: auto; }
+  h2 { font-size: 14pt; font-weight: bold; margin: 10pt 0 4pt; text-indent: 1.25cm; break-after: avoid; }
+  h3 { font-size: 14pt; font-weight: bold; margin: 6pt 0 2pt; text-indent: 1.25cm; break-after: avoid; }
+  h2.center { text-align: center; text-indent: 0; }
+  ul, ol { margin: 0; padding-left: 1.9cm; }
+  li { text-align: justify; }
+  .formula { text-align: center; text-indent: 0; margin: 3pt 0; font-style: italic; }
+  .formula .n { float: right; font-style: normal; }
+  i, .v { font-style: italic; }
+  code { font-family: 'Courier New', monospace; font-size: 12pt; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12pt; line-height: 1.2; margin: 2pt 0 6pt; }
+  tr { break-inside: avoid; }
+  .shots { display: flex; gap: 4mm; break-inside: avoid; margin: 6pt 0; }
+  .shots figure { flex: 1; margin: 0; }
+  .shots figcaption { font-size: 12pt; }
+  th, td { border: 1px solid #000; padding: 2pt 4pt; vertical-align: top; text-align: left; }
+  th { font-weight: bold; text-align: center; }
+  .tcap { text-indent: 0; text-align: left; margin-top: 6pt; break-after: avoid; }
+
+  figure { margin: 6pt 0; text-align: center; break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid #000; }
+  figcaption { text-align: center; font-size: 14pt; line-height: 1.3; margin-top: 3pt; }
+  svg { font-family: 'Times New Roman', serif; }
+  svg text { fill: #000; }
+
+  /* Title page */
+  .title { height: 257mm; display: flex; flex-direction: column; text-align: center; line-height: 1.5; break-after: page; }
+  .title p { text-indent: 0; text-align: center; }
+  .title .grow { flex: 1; }
+  .title .big { font-size: 16pt; font-weight: bold; letter-spacing: 2pt; }
+  .title .who { align-self: flex-end; width: 9cm; text-align: left; }
+  .title .who p { text-align: left; }
+</style>
+</head>
+<body>
+
+<!-- ───────────── Титульна сторінка ───────────── -->
+<section class="title">
+  <p>МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ</p>
+  <p>КИЇВСЬКИЙ НАЦІОНАЛЬНИЙ УНІВЕРСИТЕТ ІМЕНІ ТАРАСА ШЕВЧЕНКА</p>
+  <p>Факультет комп’ютерних наук та кібернетики</p>
+  <div class="grow"></div>
+  <p class="big">ЗВІТ</p>
+  <p>з лабораторної роботи № 2</p>
+  <p>з дисципліни «Розробка мультимедійних систем»</p>
+  <p>на тему: «Розробка мультимедійного застосунку з використанням сучасних технологій»</p>
+  <p>Варіант 3. MIDI-анімація</p>
+  <div class="grow"></div>
+  <div class="who">
+    <p>Виконавець:</p>
+    <p>студент групи ІПС-42</p>
+    <p>Петриченко Павло</p>
+  </div>
+  <div class="grow"></div>
+  <p>Київ — 2026</p>
+</section>
+
+<h2>Мета і завдання</h2>
+<p>Розробити програму, яка створює анімацію на основі MIDI-файлу з щонайменше двома доріжками. Дані MIDI мають керувати щонайменше двома параметрами анімації, а зв’язок між нотами й поведінкою об’єктів має бути наочним (варіант 3).</p>
+<p>Результат — веб-застосунок «MIDI Fireworks» (TypeScript, Canvas 2D, Tone.js, @tonejs/midi). Кожна нота запускає ракету, яка вибухає феєрверком <b>точно в момент звучання ноти</b>. Код: <code>github.com/pavlo-petrychenko/multi_lab_2</code>.</p>
+
+<h2>1. Обробка MIDI</h2>
+<p>Файл розбирається бібліотекою <code>@tonejs/midi</code>. Вона переводить дельта-час подій з тіків у секунди: <i>t</i> = Σ Δticks / PPQ · tempo / 10<sup>6</sup>. Кожна нота отримує час початку, тривалість (від Note On до Note Off), висоту 0–127 і velocity 0–1. Доріжка на каналі 10 вважається ударною. Усі ноти зводяться в один відсортований за часом масив. Ноти однієї доріжки, що починаються в межах 30 мс одна від одної, утворюють акорд. Демонстраційний файл має 3 доріжки (Lead, Bass, Drums; 330 нот, 41,5 с), а гучність у ньому зростає до фіналу.</p>
+
+<h2>2. Правила MIDI → анімація</h2>
+<p>Висота ноти нормується до <i>u</i> = clamp((<i>p</i> − 36)/60; 0; 1). Координати світу: <i>y</i> = 0 — земля, <i>y</i> = 1 — верх неба.</p>
+<table>
+  <tr><th style="width:24%">Дані MIDI</th><th style="width:28%">Параметр анімації</th><th>Правило</th></tr>
+  <tr><td>Час Note On</td><td>момент вибуху</td><td>рівно в <i>t</i><sub>ноти</sub> (розділ 3)</td></tr>
+  <tr><td>Висота <i>p</i></td><td>висота вибуху, позиція <i>x</i></td><td><i>h</i> = 0,35 + 0,55<i>u</i>; нижчі ноти лівіше в смузі доріжки</td></tr>
+  <tr><td>Доріжка</td><td>смуга екрана, колір</td><td><i>n</i> доріжок → <i>n</i> смуг; свій відтінок для кожної</td></tr>
+  <tr><td>Velocity <i>v</i></td><td>розмір, щільність, яскравість</td><td><i>r</i> = 0,08 + 0,12<i>v</i>; <i>N</i> = 30 + 90<i>v</i> частинок; <i>L</i> = 50 + 20<i>v</i> %</td></tr>
+  <tr><td>Velocity <i>v</i></td><td>мерехтіння, спалах неба</td><td><i>v</i> ≥ 0,85 — іскри мерехтять; <i>v</i> &gt; 0,7 — небо підсвічується</td></tr>
+  <tr><td>Тривалість <i>d</i></td><td>час життя іскор</td><td>clamp(0,6 + 1,2<i>d</i>; 0,6; 3) с</td></tr>
+  <tr><td>Акорд, тривалість</td><td>тип вибуху</td><td>≥ 3 нот → кільце; <i>d</i> ≥ 0,8 с → «верба»; <i>d</i> ≤ 0,25 с → зірки діляться на 4; інакше сфера</td></tr>
+  <tr><td>Ударні (канал 10)</td><td>вибух над дахами, тремтіння</td><td>без ракети; бочка трясе екран з силою 5<i>v</i> px</td></tr>
+</table>
+
+<h2>3. Синхронізація: вибух точно на ноті</h2>
+<p>Єдиний годинник для звуку й анімації — транспорт Tone.js. На кожному кадрі (≈60 Гц) програма бере вікно часу (<i>t</i><sub>попер</sub>; <i>t</i>] і відбирає ноти, що мають прозвучати через <i>T</i> = 1 с: <i>t</i><sub>ноти</sub> ∈ (<i>t</i><sub>попер</sub> + <i>T</i>; <i>t</i> + <i>T</i>]. Межі знаходяться бінарним пошуком у відсортованому масиві, тому кожна нота береться рівно один раз. Звук ноти одразу планується на транспорті на момент <i>t</i><sub>ноти</sub>, а з землі стартує ракета. Її початкову швидкість обрано так, щоб за час <i>T</i> вона досягла висоти <i>h</i> (рис. 1):</p>
+<p class="formula">y(T) = v<sub>0</sub>T − gT<sup>2</sup>/2 = h &nbsp;⇒&nbsp; v<sub>0</sub> = h/T + gT/2.</p>
+<p>Висота ракети рахується аналітично, тому вибух припадає на перший кадр після <i>t</i><sub>ноти</sub> (похибка ≤ 17 мс) незалежно від FPS.</p>
+<figure>
+<svg id="traj" viewBox="0 0 680 272" width="62%"></svg>
+<figcaption>Рисунок 1 — Траєкторія ракети: старт за 1 с до ноти, вибух у момент ноти</figcaption>
+</figure>
+
+<h2>4. Вибух і частинки</h2>
+<p>Під час вибуху створюється <i>N</i> частинок, рівномірно розподілених по колу (кут 2π<i>i</i>/<i>N</i> з невеликим випадковим розкидом) зі швидкістю, пропорційною <i>r</i>. Рух рахується методом Ейлера: <i>v</i> ← <i>v</i>·<i>k</i><sup><i>dt</i></sup> (опір повітря), <i>v</i><sub><i>y</i></sub> ← <i>v</i><sub><i>y</i></sub> − <i>g</i>·<i>dt</i>, <i>x</i> ← <i>x</i> + <i>v</i>·<i>dt</i>. Прозорість згасає як 1 − (вік/життя)². Кадр не очищується: поверх нього малюється напівпрозоре небо, тому частинки лишають шлейфи, а адитивне змішування кольорів дає світіння.</p>
+
+<h2>5. Результати та висновки</h2>
+<div class="shots">
+  <figure>
+    <img src="img/scene-early.png" alt="">
+    <figcaption>Рисунок 2 — Початок: тихі ноти, малі вибухи</figcaption>
+  </figure>
+  <figure>
+    <img src="img/scene-finale.png" alt="">
+    <figcaption>Рисунок 3 — Фінал: акорди → кільця, гучно → спалах</figcaption>
+  </figure>
+</div>
+<p>Програма перетворює MIDI-файл на синхронізоване зі звуком шоу феєрверків. Дані MIDI (час, висота, velocity, тривалість, доріжка, акорди, ударні) керують десятьма параметрами анімації. Синхронізацію забезпечують єдиний аудіогодинник, відбір нот наперед і формула <i>v</i><sub>0</sub> = <i>h</i>/<i>T</i> + <i>gT</i>/2. Зв’язок нот із вибухами видно на підписах нот («F5 · v74»), при вимкненні доріжок і на паузі.</p>
+
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg'
+  const el = (parent, tag, attrs, text) => {
+    const node = document.createElementNS(NS, tag)
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v)
+    if (text) node.innerHTML = text
+    parent.appendChild(node)
+    return node
+  }
+  // Deterministic random so the schematic is the same on every build.
+  let seed = 7
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
+
+  // ── Figure 2: burst kinds ──
+  {
+    const svg = document.getElementById('kinds')
+    const kinds = [
+      { name: 'peony', sub: 'звичайна нота' },
+      { name: 'willow', sub: 'd ≥ 0,8 с' },
+      { name: 'crossette', sub: 'd ≤ 0,25 с' },
+      { name: 'ring', sub: 'акорд ≥ 3 нот' },
+      { name: 'ground', sub: 'ударні' },
+    ]
+    if (svg) kinds.forEach((kind, k) => {
+      const cx = 68 + k * 136, cy = 58
+      const dot = (x, y, r = 2.2) => el(svg, 'circle', { cx: x, cy: y, r, fill: '#000' })
+      if (kind.name === 'peony') {
+        for (let i = 0; i < 60; i++) {
+          const a = rnd() * 2 * Math.PI, d = 14 + rnd() * 30
+          dot(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.95)
+        }
+      } else if (kind.name === 'willow') {
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * 2 * Math.PI
+          let x = cx, y = cy - 10, vx = Math.cos(a) * 3.2, vy = Math.sin(a) * 3.2
+          for (let s = 0; s < 12; s++) { x += vx; y += vy; vx *= 0.88; vy = vy * 0.88 + 0.45; dot(x, y, 1.3) }
+        }
+      } else if (kind.name === 'crossette') {
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * 2 * Math.PI + 0.3
+          const x = cx + Math.cos(a) * 22, y = cy + Math.sin(a) * 22
+          el(svg, 'line', { x1: cx, y1: cy, x2: x, y2: y, stroke: '#000', 'stroke-width': 0.6, 'stroke-dasharray': '2 2' })
+          dot(x, y, 2.6)
+          for (let m = 0; m < 4; m++) {
+            const b = a + Math.PI / 4 + (m * Math.PI) / 2
+            dot(x + Math.cos(b) * 12, y + Math.sin(b) * 12, 1.8)
+          }
+        }
+      } else if (kind.name === 'ring') {
+        for (let i = 0; i < 36; i++) {
+          const a = (i / 36) * 2 * Math.PI
+          dot(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40, 2)
+        }
+      } else {
+        el(svg, 'rect', { x: cx - 50, y: 92, width: 100, height: 10, fill: '#000' })
+        for (let i = 0; i < 26; i++) {
+          const a = Math.PI / 6 + rnd() * (2 * Math.PI / 3), d = 10 + rnd() * 34
+          dot(cx + Math.cos(a) * d, 90 - Math.sin(a) * d)
+        }
+      }
+      el(svg, 'text', { x: cx, y: 125, 'text-anchor': 'middle', 'font-size': 20, 'font-style': 'italic' }, kind.name)
+      el(svg, 'text', { x: cx, y: 146, 'text-anchor': 'middle', 'font-size': 17 }, kind.sub)
+    })
+  }
+
+  // ── Figure 3: rocket trajectory ──
+  {
+    const svg = document.getElementById('traj')
+    const h = 0.68, T = 1, g = 1, v0 = h / T + (g * T) / 2
+    const X0 = 115, W = 385, Y0 = 190, H = 230
+    const px = (tau) => X0 + tau * W
+    const py = (y) => Y0 - y * H
+    // axes
+    el(svg, 'line', { x1: 50, y1: Y0, x2: 660, y2: Y0, stroke: '#000', 'stroke-width': 1.2 })
+    el(svg, 'line', { x1: 50, y1: Y0, x2: 50, y2: 10, stroke: '#000', 'stroke-width': 1.2 })
+    el(svg, 'text', { x: 655, y: Y0 + 18, 'text-anchor': 'end', 'font-size': 21, 'font-style': 'italic' }, 'час')
+    el(svg, 'text', { x: 56, y: 22, 'font-size': 21, 'font-style': 'italic' }, 'y')
+    // the flown part and the dashed continuation
+    const path = (from, to) => {
+      let d = ''
+      for (let i = 0; i <= 60; i++) {
+        const tau = from + ((to - from) * i) / 60
+        d += `${i ? 'L' : 'M'}${px(tau).toFixed(1)},${py(v0 * tau - (g * tau * tau) / 2).toFixed(1)}`
+      }
+      return d
+    }
+    el(svg, 'path', { d: path(0, T), fill: 'none', stroke: '#000', 'stroke-width': 2 })
+    el(svg, 'path', { d: path(T, 1.45), fill: 'none', stroke: '#000', 'stroke-width': 1, 'stroke-dasharray': '4 4' })
+    // height h
+    el(svg, 'line', { x1: 50, y1: py(h), x2: px(T), y2: py(h), stroke: '#000', 'stroke-dasharray': '3 3' })
+    el(svg, 'text', { x: 44, y: py(h) + 5, 'text-anchor': 'end', 'font-size': 21, 'font-style': 'italic' }, 'h')
+    // note time
+    el(svg, 'line', { x1: px(T), y1: Y0, x2: px(T), y2: py(h), stroke: '#000', 'stroke-dasharray': '3 3' })
+    // burst star
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * 2 * Math.PI
+      el(svg, 'line', {
+        x1: px(T) + Math.cos(a) * 6, y1: py(h) + Math.sin(a) * 6,
+        x2: px(T) + Math.cos(a) * 20, y2: py(h) + Math.sin(a) * 20, stroke: '#000', 'stroke-width': 1.3,
+      })
+    }
+    // launch arrow (initial velocity)
+    el(svg, 'line', { x1: px(0), y1: Y0, x2: px(0) + 30, y2: Y0 - 30 * (v0 * H) / W, stroke: '#000', 'stroke-width': 1.6, 'marker-end': 'url(#ar)' })
+    el(svg, 'text', { x: px(0) + 95, y: Y0 - 22, 'font-size': 21, 'font-style': 'italic' }, 'v₀ = h/T + gT/2')
+    // labels on the time axis
+    el(svg, 'text', { x: px(0), y: Y0 + 20, 'text-anchor': 'middle', 'font-size': 21 }, 't<tspan baseline-shift="sub" font-size="10">ноти</tspan> − T')
+    el(svg, 'text', { x: px(0), y: Y0 + 42, 'text-anchor': 'middle', 'font-size': 18 }, '(нота відібрана, старт)')
+    el(svg, 'text', { x: px(T), y: Y0 + 20, 'text-anchor': 'middle', 'font-size': 21 }, 't<tspan baseline-shift="sub" font-size="10">ноти</tspan>')
+    el(svg, 'text', { x: px(T), y: Y0 + 42, 'text-anchor': 'middle', 'font-size': 18 }, '(звук + вибух)')
+    el(svg, 'line', { x1: px(0), y1: Y0 + 54, x2: px(T), y2: Y0 + 54, stroke: '#000', 'marker-start': 'url(#ar)', 'marker-end': 'url(#ar)' })
+    el(svg, 'text', { x: px(T / 2), y: Y0 + 74, 'text-anchor': 'middle', 'font-size': 21, 'font-style': 'italic' }, 'T = 1 с')
+  }
+</script>
+</body>
+</html>
